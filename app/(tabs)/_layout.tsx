@@ -1,33 +1,65 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
+import { COLORS } from '@/constants/data'; // Ensure alias is set or use relative path '../../constants/data'
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: COLORS.darkBlue,
+        tabBarInactiveTintColor: '#999',
+        tabBarStyle: {
+          height: 80,
+          paddingBottom: 20,
+          paddingTop: 10,
+          borderTopWidth: 1,
+          borderTopColor: '#f0f0f0',
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 9,
+          fontWeight: 'bold',
+          letterSpacing: 0.5,
+          marginTop: 4,
+        }
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'HOME',
+          tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="chat"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'CHAT',
+          tabBarIcon: ({ color }) => <Ionicons name="chatbubble-outline" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="join"
+        options={{
+          title: 'JOIN',
+          tabBarIcon: ({ color }) => (
+             // Custom styling for the Join "Plus" icon to match design
+            <View style={{ marginBottom: 4 }}>
+              <Ionicons name="add-circle-outline" size={28} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: 'ACCOUNT',
+          tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
         }}
       />
     </Tabs>
