@@ -49,13 +49,13 @@ export default function AccountScreen() {
 
   async function handleAuth(type: 'LOGIN' | 'SIGNUP') {
     setLoading(true);
-    const { error } = type === 'LOGIN' 
+    const { error } = type === 'LOGIN'
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password });
 
     if (error) Alert.alert("Error", error.message);
     else if (type === 'SIGNUP') Alert.alert("Success", "Check your email for a confirmation link.");
-    
+
     setLoading(false);
   }
 
@@ -67,7 +67,7 @@ export default function AccountScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [1,1],
+      aspect: [1, 1],
       quality: 0.6,
     });
 
@@ -156,7 +156,7 @@ export default function AccountScreen() {
             <Text style={styles.emailTextCenter}>{userEmail}</Text>
 
             <TouchableOpacity style={[styles.primaryBtn, { marginTop: 18 }]} onPress={saveProfile} disabled={savingProfile}>
-              {savingProfile ? <ActivityIndicator color="#fff"/> : <Text style={styles.primaryBtnText}>Save Profile</Text>}
+              {savingProfile ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Save Profile</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.ghostBtn, { marginTop: 12 }]} onPress={handleSignOut}>
@@ -171,11 +171,18 @@ export default function AccountScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.centerContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.authLogoBox}>
-          <Text style={styles.authLogoText}>k</Text>
-        </View>
-        <Text style={styles.brandTitle}>kraft</Text>
+        <Image
+          source={require('@/assets/images/logo-icon.png')}
+          style={styles.loginIcon}
+          resizeMode="contain"
+        />
+        <Image
+          source={require('@/assets/images/logo-white.png')}
+          style={styles.loginWordmark}
+          resizeMode="contain"
+        />
 
+        {/* Removed the accidental duplicate wrapper here */}
         <View style={styles.welcomeBox}>
           <Text style={styles.authTitle}>Welcome</Text>
           <Text style={styles.authSubtitle}>Sign in to your account</Text>
@@ -183,30 +190,30 @@ export default function AccountScreen() {
 
         <View style={styles.formContainer}>
           <Text style={styles.label}>EMAIL</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="you@example.com" 
+          <TextInput
+            style={styles.input}
+            placeholder="you@example.com"
             placeholderTextColor={COLORS.textLight}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
           />
           <Text style={styles.label}>PASSWORD</Text>
-          <TextInput 
-            style={styles.input} 
-            secureTextEntry 
+          <TextInput
+            style={styles.input}
+            secureTextEntry
             placeholder="••••••••"
             placeholderTextColor={COLORS.textLight}
             value={password}
             onChangeText={setPassword}
           />
-          
+
           <Text style={styles.forgotPassword}>Forgot password?</Text>
 
           <TouchableOpacity style={styles.loginBtn} onPress={() => handleAuth('LOGIN')} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff"/> : <Text style={styles.loginBtnText}>Sign in</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>Sign in</Text>}
           </TouchableOpacity>
-          
+
           <Text style={styles.orText}>or</Text>
 
           <TouchableOpacity style={styles.googleBtn}>
@@ -223,39 +230,49 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.background },
-    centerContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 30 },
-    authLogoBox: { width: 40, height: 40, backgroundColor: COLORS.orange, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-    authLogoText: { fontSize: 24, color: 'white', fontWeight: 'bold' },
-    brandTitle: { fontSize: 32, fontWeight: '400', color: COLORS.white, marginBottom: 40, letterSpacing: 1 },
-    welcomeBox: { alignItems: 'center', marginBottom: 30 },
-    authTitle: { fontSize: 20, fontWeight: '700', color: COLORS.white },
-    authSubtitle: { color: COLORS.textLight, fontSize: 13, marginTop: 5 },
-    formContainer: { width: '100%' },
-    label: { fontSize: 10, fontWeight: '700', color: COLORS.textLight, marginBottom: 8, textTransform: 'uppercase' },
-    labelSmallCenter: { fontSize: 10, fontWeight: 'bold', color: COLORS.textLight, marginBottom: 8, letterSpacing: 0.5, textAlign: 'center' },
-    input: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.lightGray, borderRadius: 10, padding: 14, marginBottom: 15, color: COLORS.white, fontSize: 14 },
-    inputCentered: { textAlign: 'center' },
-    forgotPassword: { color: COLORS.orange, fontSize: 11, textAlign: 'right', marginBottom: 20 },
-    loginBtn: { backgroundColor: COLORS.orange, padding: 16, borderRadius: 12, alignItems: 'center' },
-    loginBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
-    orText: { color: COLORS.textLight, textAlign: 'center', fontSize: 11, marginVertical: 15 },
-    googleBtn: { backgroundColor: COLORS.cardBg, borderWidth: 1, borderColor: COLORS.lightGray, padding: 16, borderRadius: 12, alignItems: 'center' },
-    googleBtnText: { color: COLORS.white, fontWeight: '600', fontSize: 14 },
-    signupPrompt: { color: COLORS.textLight, textAlign: 'center', fontSize: 12, marginTop: 25 },
-    signupLink: { color: COLORS.green, fontWeight: 'bold' },
-    
-    // Account Logged In Styles
-    card: { width: '100%', backgroundColor: COLORS.cardBg, borderRadius: 16, padding: 22, alignItems: 'center' },
-    avatarTouchable: { width: 120, height: 120, borderRadius: 60, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-    avatarRow: { width: '100%', alignItems: 'center', marginBottom: 20 },
-    avatarImage: { width: 120, height: 120, borderRadius: 60 },
-    avatarPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' },
-    avatarInitials: { color: 'white', fontSize: 40, fontWeight: 'bold' },
-    avatarEdit: { position: 'absolute', right: 6, bottom: 6, width: 34, height: 34, borderRadius: 18, backgroundColor: COLORS.orange, justifyContent: 'center', alignItems: 'center', elevation: 3 },
-    emailTextCenter: { color: COLORS.textLight, fontWeight: '600', textAlign: 'center', marginTop: 6 },
-    primaryBtn: { width: '100%', backgroundColor: COLORS.orange, padding: 14, borderRadius: 14, alignItems: 'center' },
-    primaryBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-    ghostBtn: { width: '100%', backgroundColor: 'transparent', padding: 14, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.lightGray },
-    ghostBtnText: { color: COLORS.white, fontWeight: '700' },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  centerContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 30 },
+  authLogoBox: { width: 40, height: 40, backgroundColor: COLORS.orange, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  authLogoText: { fontSize: 24, color: 'white', fontWeight: 'bold' },
+  brandTitle: { fontSize: 32, fontWeight: '400', color: COLORS.white, marginBottom: 40, letterSpacing: 1 },
+  welcomeBox: { alignItems: 'center', marginBottom: 30 },
+  authTitle: { fontSize: 20, fontWeight: '700', color: COLORS.white },
+  authSubtitle: { color: COLORS.textLight, fontSize: 13, marginTop: 5 },
+  formContainer: { width: '100%' },
+  label: { fontSize: 10, fontWeight: '700', color: COLORS.textLight, marginBottom: 8, textTransform: 'uppercase' },
+  labelSmallCenter: { fontSize: 10, fontWeight: 'bold', color: COLORS.textLight, marginBottom: 8, letterSpacing: 0.5, textAlign: 'center' },
+  input: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.lightGray, borderRadius: 10, padding: 14, marginBottom: 15, color: COLORS.white, fontSize: 14 },
+  inputCentered: { textAlign: 'center' },
+  forgotPassword: { color: COLORS.orange, fontSize: 11, textAlign: 'right', marginBottom: 20 },
+  loginBtn: { backgroundColor: COLORS.orange, padding: 16, borderRadius: 12, alignItems: 'center' },
+  loginBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
+  orText: { color: COLORS.textLight, textAlign: 'center', fontSize: 11, marginVertical: 15 },
+  googleBtn: { backgroundColor: COLORS.cardBg, borderWidth: 1, borderColor: COLORS.lightGray, padding: 16, borderRadius: 12, alignItems: 'center' },
+  googleBtnText: { color: COLORS.white, fontWeight: '600', fontSize: 14 },
+  signupPrompt: { color: COLORS.textLight, textAlign: 'center', fontSize: 12, marginTop: 25 },
+  signupLink: { color: COLORS.green, fontWeight: 'bold' },
+
+  // Account Logged In Styles
+  card: { width: '100%', backgroundColor: COLORS.cardBg, borderRadius: 16, padding: 22, alignItems: 'center' },
+  avatarTouchable: { width: 120, height: 120, borderRadius: 60, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
+  avatarRow: { width: '100%', alignItems: 'center', marginBottom: 20 },
+  avatarImage: { width: 120, height: 120, borderRadius: 60 },
+  avatarPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' },
+  avatarInitials: { color: 'white', fontSize: 40, fontWeight: 'bold' },
+  avatarEdit: { position: 'absolute', right: 6, bottom: 6, width: 34, height: 34, borderRadius: 18, backgroundColor: COLORS.orange, justifyContent: 'center', alignItems: 'center', elevation: 3 },
+  emailTextCenter: { color: COLORS.textLight, fontWeight: '600', textAlign: 'center', marginTop: 6 },
+  primaryBtn: { width: '100%', backgroundColor: COLORS.orange, padding: 14, borderRadius: 14, alignItems: 'center' },
+  primaryBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  ghostBtn: { width: '100%', backgroundColor: 'transparent', padding: 14, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.lightGray },
+  ghostBtnText: { color: COLORS.white, fontWeight: '700' },
+  loginIcon: {
+    width: 45,
+    height: 45,
+    marginBottom: 15,
+  },
+  loginWordmark: {
+    width: 120,
+    height: 40,
+    marginBottom: 40,
+  },
 });

@@ -7,7 +7,12 @@ import { FlatList, Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, S
 
 const Header = () => (
   <View style={styles.headerContainer}>
-    <Text style={styles.brandTitle}>kraft</Text>
+    <Image 
+      source={require('@/assets/images/logo-white.png')} 
+      style={styles.logoImage} 
+      resizeMode="contain" 
+    />
+    
     <TouchableOpacity style={styles.bellButton}>
       <Ionicons name="notifications-outline" size={20} color={COLORS.white} />
       <View style={styles.notificationDot} />
@@ -268,4 +273,9 @@ const styles = StyleSheet.create({
   bookBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
   
   emptyText: { textAlign: 'center', marginTop: 30, color: COLORS.textLight },
+
+  logoImage: { 
+  height: 32, 
+  width: 100, // Adjust this width based on your actual image proportions
+},
 });
