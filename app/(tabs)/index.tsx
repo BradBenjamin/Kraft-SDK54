@@ -8,8 +8,8 @@ import { Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet,
 const Header = ({ avatarUrl, onPressProfile, userEmail }: { avatarUrl?: string; onPressProfile?: () => void; userEmail?: string }) => (
   <View style={styles.headerContainer}>
     <View style={styles.logoContainer}>
-      <View style={styles.logoBox}><Text style={styles.logoText}>C</Text></View>
-      <Text style={styles.brandName}>CRAFTIE</Text>
+      <View style={styles.logoBox}><Text style={styles.logoText}>K</Text></View>
+      <Text style={styles.brandName}>KRAFTER</Text>
     </View>
     <View style={styles.authButtons}>
       {avatarUrl ? (
@@ -119,8 +119,6 @@ export default function HomeScreen() {
       if (taskerError) throw taskerError;
       if (taskerData) {
         setTaskers(taskerData);
-        // If no filters were provided, treat this as the master list
-        if (!filters || (Object.keys(filters).length === 0)) setAllTaskers(taskerData);
       }
       
     } catch (error) {
@@ -145,7 +143,6 @@ export default function HomeScreen() {
     fetchData({ search: searchQuery, category: newSelected, minRate, maxRate, minRating });
   };
 
-  // Replace your current applyFilters function with this:
   const applyFilters = () => {
     fetchData({ 
       search: searchQuery, 
@@ -156,6 +153,7 @@ export default function HomeScreen() {
     });
     setShowFilters(false);
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -221,7 +219,14 @@ export default function HomeScreen() {
             />
 
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 }}>
-              <TouchableOpacity style={styles.clearBtn} onPress={() => { setMinRate(''); setMaxRate(''); setMinRating(''); setTaskers(allTaskers); }}>
+              <TouchableOpacity 
+                style={styles.clearBtn} 
+                onPress={() => { 
+                  setMinRate(''); 
+                  setMaxRate(''); 
+                  setMinRating(''); 
+                  fetchData({ search: searchQuery, category: selectedCategory }); 
+                }}>
                 <Text style={styles.clearBtnText}>Clear</Text>
               </TouchableOpacity>
 
@@ -269,7 +274,11 @@ export default function HomeScreen() {
         </View>
 
         {filteredTaskers.map((tasker) => (
-          <View key={tasker.id} style={styles.taskerCard}>
+          <TouchableOpacity 
+            key={tasker.id} 
+            style={styles.taskerCard}
+            onPress={() => router.push(`/tasker/${tasker.id}`)}
+          >
             <View style={styles.taskerHeader}>
               <Image source={{ uri: tasker.image }} style={styles.avatar} />
               <View style={styles.taskerInfo}>
@@ -300,7 +309,7 @@ export default function HomeScreen() {
             {tasker.is_online && (
               <View style={styles.onlineBadge}><Text style={styles.onlineText}>ONLINE</Text></View>
             )}
-          </View>
+          </TouchableOpacity>
         ))}
         {filteredTaskers.length === 0 && (
           <Text style={{textAlign: 'center', marginTop: 30, color: '#999'}}>No taskers found matching your filters.</Text>
