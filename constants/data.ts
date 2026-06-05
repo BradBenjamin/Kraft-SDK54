@@ -1,12 +1,13 @@
 export const COLORS = {
-  darkBlue: '#1F2041',
-  orange: '#D35D47',
-  beige: '#FDFCF8',
-  lightGray: '#F4F4F4',
-  textDark: '#1a1a2e',
-  textLight: '#888888',
+  background: '#12142B', // Main deep navy background
+  cardBg: '#1D203E',     // Lighter navy for cards/inputs
+  orange: '#D55B45',     // Primary accent
+  textDark: '#FFFFFF',   // Reverted for dark mode (Titles)
+  textLight: '#8F93A8',  // Subtitles
+  lightGray: '#2B2F4E',  // Dividers/Input borders
   white: '#FFFFFF',
-  green: '#9CBF78',
+  green: '#4CAF50',
+  darkBlue: '#12142B',   // Legacy alias mapped to new background
 };
 
 // Types matching your Supabase Tables

@@ -10,23 +10,16 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: COLORS.darkBlue,
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: COLORS.orange,
+        tabBarInactiveTintColor: COLORS.textLight,
         tabBarStyle: {
-          height: 80,
-          paddingBottom: 20,
+          backgroundColor: COLORS.background,
+          borderTopColor: COLORS.lightGray,
+          height: 85,
+          paddingBottom: 25,
           paddingTop: 10,
-          borderTopWidth: 1,
-          borderTopColor: '#f0f0f0',
-          elevation: 0,
-          shadowOpacity: 0,
         },
-        tabBarLabelStyle: {
-          fontSize: 9,
-          fontWeight: 'bold',
-          letterSpacing: 0.5,
-          marginTop: 4,
-        }
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' }
       }}
     >
       <Tabs.Screen
@@ -44,12 +37,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="join"
+        name="bookings" // Rename your app/(tabs)/join.tsx file to bookings.tsx
         options={{
-          title: 'JOIN',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="add-circle-outline" size={28} color={color} />
-          ),
+          title: 'Bookings',
+          tabBarIcon: ({ color }) => <Ionicons name="briefcase-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen

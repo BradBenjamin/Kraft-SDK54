@@ -11,7 +11,6 @@ export default function AccountScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Profile state
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [name, setName] = useState('');
@@ -21,12 +20,10 @@ export default function AccountScreen() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
 
-    // Listen for auth changes (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
-    // Get user and profile if logged in
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       if (user) fetchProfile(user.id);
@@ -104,7 +101,6 @@ export default function AccountScreen() {
 
       const publicUrl = publicUrlData.publicUrl;
 
-      // Save to profile
       const { error: profileError } = await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl });
       if (profileError) throw profileError;
 
@@ -150,14 +146,12 @@ export default function AccountScreen() {
                 ) : (
                   <View style={styles.avatarPlaceholder}><Text style={styles.avatarInitials}>{(userEmail || '').charAt(0).toUpperCase()}</Text></View>
                 )}
-
                 <View style={styles.avatarEdit}><Ionicons name="camera" size={16} color="#fff" /></View>
               </Pressable>
-
             </View>
 
             <Text style={styles.labelSmallCenter}>FULL NAME</Text>
-            <TextInput value={name} onChangeText={setName} placeholder="Your name" style={[styles.input, styles.inputCentered]} />
+            <TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={COLORS.textLight} style={[styles.input, styles.inputCentered]} />
 
             <Text style={styles.emailTextCenter}>{userEmail}</Text>
 
@@ -177,15 +171,22 @@ export default function AccountScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.centerContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.authLogoBox}><Text style={styles.authLogoText}>C</Text></View>
-        <Text style={styles.authTitle}>Log in to Craftie</Text>
+        <View style={styles.authLogoBox}>
+          <Text style={styles.authLogoText}>k</Text>
+        </View>
+        <Text style={styles.brandTitle}>kraft</Text>
+
+        <View style={styles.welcomeBox}>
+          <Text style={styles.authTitle}>Welcome</Text>
+          <Text style={styles.authSubtitle}>Sign in to your account</Text>
+        </View>
 
         <View style={styles.formContainer}>
-          <Text style={styles.label}>EMAIL ADDRESS</Text>
+          <Text style={styles.label}>EMAIL</Text>
           <TextInput 
             style={styles.input} 
-            placeholder="nume@exemplu.ro" 
-            placeholderTextColor="#aaa"
+            placeholder="you@example.com" 
+            placeholderTextColor={COLORS.textLight}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -194,17 +195,27 @@ export default function AccountScreen() {
           <TextInput 
             style={styles.input} 
             secureTextEntry 
+            placeholder="••••••••"
+            placeholderTextColor={COLORS.textLight}
             value={password}
             onChangeText={setPassword}
           />
           
+          <Text style={styles.forgotPassword}>Forgot password?</Text>
+
           <TouchableOpacity style={styles.loginBtn} onPress={() => handleAuth('LOGIN')} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff"/> : <Text style={styles.loginBtnText}>Log in</Text>}
+            {loading ? <ActivityIndicator color="#fff"/> : <Text style={styles.loginBtnText}>Sign in</Text>}
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.secondaryBtn} onPress={() => handleAuth('SIGNUP')} disabled={loading}>
-            <Text style={styles.secondaryBtnText}>Sign Up</Text>
+          <Text style={styles.orText}>or</Text>
+
+          <TouchableOpacity style={styles.googleBtn}>
+            <Text style={styles.googleBtnText}>G  Continue with Google</Text>
           </TouchableOpacity>
+
+          <Text style={styles.signupPrompt}>
+            Don't have an account? <Text style={styles.signupLink} onPress={() => handleAuth('SIGNUP')}>Sign up</Text>
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -212,36 +223,39 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.white },
+    container: { flex: 1, backgroundColor: COLORS.background },
     centerContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 30 },
-    authLogoBox: { width: 60, height: 60, backgroundColor: COLORS.darkBlue, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-    authLogoText: { fontSize: 30, color: 'white', fontWeight: 'bold' },
-    authTitle: { fontSize: 24, fontWeight: 'bold', color: COLORS.darkBlue, marginBottom: 10 },
-    authSubtitle: { textAlign: 'center', color: '#777', marginBottom: 40 },
+    authLogoBox: { width: 40, height: 40, backgroundColor: COLORS.orange, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+    authLogoText: { fontSize: 24, color: 'white', fontWeight: 'bold' },
+    brandTitle: { fontSize: 32, fontWeight: '400', color: COLORS.white, marginBottom: 40, letterSpacing: 1 },
+    welcomeBox: { alignItems: 'center', marginBottom: 30 },
+    authTitle: { fontSize: 20, fontWeight: '700', color: COLORS.white },
+    authSubtitle: { color: COLORS.textLight, fontSize: 13, marginTop: 5 },
     formContainer: { width: '100%' },
-    label: { fontSize: 11, fontWeight: 'bold', color: COLORS.darkBlue, marginBottom: 8, letterSpacing: 0.5 },
-    labelSmall: { fontSize: 10, fontWeight: 'bold', color: COLORS.darkBlue, marginBottom: 6, letterSpacing: 0.5 },
-    labelSmallCenter: { fontSize: 10, fontWeight: 'bold', color: COLORS.darkBlue, marginBottom: 8, letterSpacing: 0.5, textAlign: 'center' },
-    input: { backgroundColor: '#FAFAFA', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, padding: 12, marginBottom: 10, fontSize: 14 },
+    label: { fontSize: 10, fontWeight: '700', color: COLORS.textLight, marginBottom: 8, textTransform: 'uppercase' },
+    labelSmallCenter: { fontSize: 10, fontWeight: 'bold', color: COLORS.textLight, marginBottom: 8, letterSpacing: 0.5, textAlign: 'center' },
+    input: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.lightGray, borderRadius: 10, padding: 14, marginBottom: 15, color: COLORS.white, fontSize: 14 },
     inputCentered: { textAlign: 'center' },
-    loginBtn: { backgroundColor: COLORS.darkBlue, padding: 14, borderRadius: 14, alignItems: 'center', marginBottom: 15 },
-    loginBtnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-    secondaryBtn: { backgroundColor: 'white', padding: 14, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: '#eee', marginBottom: 25 },
-    secondaryBtnText: { color: COLORS.darkBlue, fontWeight: 'bold', fontSize: 14 },
-    accountHeader: { flexDirection: 'row', alignItems: 'center' },
+    forgotPassword: { color: COLORS.orange, fontSize: 11, textAlign: 'right', marginBottom: 20 },
+    loginBtn: { backgroundColor: COLORS.orange, padding: 16, borderRadius: 12, alignItems: 'center' },
+    loginBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
+    orText: { color: COLORS.textLight, textAlign: 'center', fontSize: 11, marginVertical: 15 },
+    googleBtn: { backgroundColor: COLORS.cardBg, borderWidth: 1, borderColor: COLORS.lightGray, padding: 16, borderRadius: 12, alignItems: 'center' },
+    googleBtnText: { color: COLORS.white, fontWeight: '600', fontSize: 14 },
+    signupPrompt: { color: COLORS.textLight, textAlign: 'center', fontSize: 12, marginTop: 25 },
+    signupLink: { color: COLORS.green, fontWeight: 'bold' },
+    
+    // Account Logged In Styles
+    card: { width: '100%', backgroundColor: COLORS.cardBg, borderRadius: 16, padding: 22, alignItems: 'center' },
     avatarTouchable: { width: 120, height: 120, borderRadius: 60, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-    avatarRow: { width: '100%', alignItems: 'center', marginBottom: 10 },
+    avatarRow: { width: '100%', alignItems: 'center', marginBottom: 20 },
     avatarImage: { width: 120, height: 120, borderRadius: 60 },
-    avatarPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: COLORS.darkBlue, justifyContent: 'center', alignItems: 'center' },
+    avatarPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' },
     avatarInitials: { color: 'white', fontSize: 40, fontWeight: 'bold' },
     avatarEdit: { position: 'absolute', right: 6, bottom: 6, width: 34, height: 34, borderRadius: 18, backgroundColor: COLORS.orange, justifyContent: 'center', alignItems: 'center', elevation: 3 },
-    emailText: { color: '#444', fontWeight: '600' },
-    emailTextCenter: { color: '#666', fontWeight: '600', textAlign: 'center', marginTop: 6 },
-
-    // Card + buttons
-    card: { width: '100%', backgroundColor: 'white', borderRadius: 16, padding: 22, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 6, alignItems: 'center' },
+    emailTextCenter: { color: COLORS.textLight, fontWeight: '600', textAlign: 'center', marginTop: 6 },
     primaryBtn: { width: '100%', backgroundColor: COLORS.orange, padding: 14, borderRadius: 14, alignItems: 'center' },
     primaryBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-    ghostBtn: { width: '100%', backgroundColor: 'transparent', padding: 14, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: '#EEE' },
-    ghostBtnText: { color: COLORS.darkBlue, fontWeight: '700' },
+    ghostBtn: { width: '100%', backgroundColor: 'transparent', padding: 14, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.lightGray },
+    ghostBtnText: { color: COLORS.white, fontWeight: '700' },
 });

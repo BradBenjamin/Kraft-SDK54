@@ -3,30 +3,15 @@ import { supabase } from '@/lib/supabase';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-const Header = ({ avatarUrl, onPressProfile, userEmail }: { avatarUrl?: string; onPressProfile?: () => void; userEmail?: string }) => (
+const Header = () => (
   <View style={styles.headerContainer}>
-    <View style={styles.logoContainer}>
-      <View style={styles.logoBox}><Text style={styles.logoText}>K</Text></View>
-      <Text style={styles.brandName}>KRAFTER</Text>
-    </View>
-    <View style={styles.authButtons}>
-      {avatarUrl ? (
-        <TouchableOpacity onPress={onPressProfile} style={styles.headerAvatarTouchable}>
-          <Image source={{ uri: avatarUrl }} style={styles.headerAvatar} />
-        </TouchableOpacity>
-      ) : userEmail ? (
-        <TouchableOpacity onPress={onPressProfile} style={styles.headerAvatarTouchable}>
-          <View style={styles.headerAvatarPlaceholder}><Text style={{color: 'white', fontWeight:'700'}}>{userEmail.charAt(0).toUpperCase()}</Text></View>
-        </TouchableOpacity>
-      ) : (
-        <>
-          <TouchableOpacity><Text style={styles.loginText}>Log In</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.signUpBtn}><Text style={styles.signUpText}>Sign Up</Text></TouchableOpacity>
-        </>
-      )}
-    </View>
+    <Text style={styles.brandTitle}>kraft</Text>
+    <TouchableOpacity style={styles.bellButton}>
+      <Ionicons name="notifications-outline" size={20} color={COLORS.white} />
+      <View style={styles.notificationDot} />
+    </TouchableOpacity>
   </View>
 );
 
@@ -36,90 +21,31 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  // Advanced Filters
-  const [showFilters, setShowFilters] = useState(false);
-  const [minRate, setMinRate] = useState('');
-  const [maxRate, setMaxRate] = useState('');
-  const [minRating, setMinRating] = useState('');
+  
   const router = useRouter();
 
-  // Auth & profile for header avatar
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    // initial user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      if (user) fetchProfile(user.id);
-    });
-
-    // subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) fetchProfile(u.id);
-      else setProfile(null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchProfile = async (id?: string) => {
-    if (!id) return;
-    try {
-      const { data } = await supabase.from('profiles').select('avatar_url, full_name').eq('id', id).single();
-      setProfile(data ?? null);
-    } catch (e) {
-      console.log('fetchProfile error', e);
-      setProfile(null);
-    }
-  };
-
-  const fetchData = async (filters?: { search?: string; category?: string | null; minRate?: string; maxRate?: string; minRating?: string }) => {
+  const fetchData = async (filters?: { search?: string; category?: string | null }) => {
     setLoading(true);
     try {
       const { data: catData, error: catError } = await supabase.from('categories').select('*');
       if (catError) throw catError;
       if (catData) setCategories(catData);
 
-      // Build server-side tasker query with applied filters
       let query: any = supabase.from('taskers').select('*');
 
       if (filters?.search && filters.search.trim().length > 0) {
-        // Search by name (server-side). We intentionally avoid complex tag substring search here.
         query = query.ilike('name', `%${filters.search.trim()}%`);
       }
 
       if (filters?.category) {
-        // tags is an array column - ensure the selected category exists inside tags
         query = query.contains('tags', [filters.category]);
       }
 
-      if (filters?.minRate) {
-        const min = parseInt(filters.minRate || '', 10);
-        if (!isNaN(min)) query = query.gte('rate', min);
-      }
-
-      if (filters?.maxRate) {
-        const max = parseInt(filters.maxRate || '', 10);
-        if (!isNaN(max)) query = query.lte('rate', max);
-      }
-
-      if (filters?.minRating) {
-        const mr = parseFloat(filters.minRating || '');
-        if (!isNaN(mr)) query = query.gte('rating', mr);
-      }
-
-      // You can add ordering here if desired
       const { data: taskerData, error: taskerError } = await query;
       if (taskerError) throw taskerError;
-      if (taskerData) {
-        setTaskers(taskerData);
-      }
+      if (taskerData) setTaskers(taskerData);
       
     } catch (error) {
       console.log('Error fetching data:', error);
@@ -131,189 +57,153 @@ export default function HomeScreen() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Filtering Logic
-  // Results are fetched server-side when filters are applied. Use the returned taskers array directly.
-  const filteredTaskers = taskers;
-
   const handleCategoryPress = (catName: string) => {
-    // Toggle: if already selected, deselect
     const newSelected = selectedCategory === catName ? null : catName;
     setSelectedCategory(newSelected);
-    // Fetch server-side with new category
-    fetchData({ search: searchQuery, category: newSelected, minRate, maxRate, minRating });
-  };
-
-  const applyFilters = () => {
-    fetchData({ 
-      search: searchQuery, 
-      category: selectedCategory, 
-      minRate, 
-      maxRate, 
-      minRating 
-    });
-    setShowFilters(false);
+    fetchData({ search: searchQuery, category: newSelected });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
       <ScrollView 
         style={styles.screenScroll} 
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {setRefreshing(true); fetchData({ search: searchQuery, category: selectedCategory, minRate, maxRate, minRating });}} />}
+        refreshControl={<RefreshControl tintColor={COLORS.orange} refreshing={refreshing} onRefresh={() => {setRefreshing(true); fetchData({ search: searchQuery, category: selectedCategory });}} />}
       >
-        <Header avatarUrl={profile?.avatar_url} onPressProfile={() => router.push('/(tabs)/account')} userEmail={user?.email} />
+        <Header />
         
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-             <Ionicons name="search" size={20} color="#999" style={{marginRight: 10}} />
-             <TextInput 
-              placeholder="Search by name or skill..." 
-              style={styles.searchInput} 
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {(searchQuery.length > 0 || selectedCategory) && (
-              <TouchableOpacity onPress={() => {setSearchQuery(''); setSelectedCategory(null); fetchData();}}>
-                <Ionicons name="close-circle" size={20} color={COLORS.orange} />
-              </TouchableOpacity>
-            )}
+          <Ionicons name="search" size={18} color={COLORS.textLight} style={{marginRight: 10}} />
+          <TextInput 
+            placeholder="Search trade, skill or name..." 
+            style={styles.searchInput} 
+            placeholderTextColor={COLORS.textLight}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={() => fetchData({ search: searchQuery, category: selectedCategory })}
+          />
+          {(searchQuery.length > 0) ? (
+            <TouchableOpacity onPress={() => {setSearchQuery(''); fetchData({category: selectedCategory});}}>
+              <Ionicons name="close-circle" size={18} color={COLORS.textLight} />
+            </TouchableOpacity>
+          ) : (
+            <Ionicons name="filter" size={18} color={COLORS.textLight} />
+          )}
         </View>
 
-        {/* Filters */}
-        <View style={styles.filterRow}>
-          <TouchableOpacity style={styles.filterToggle} onPress={() => setShowFilters(prev => !prev)}>
-            <Ionicons name="options" size={18} color={showFilters ? COLORS.orange : '#666'} style={{marginRight:8}} />
-            <Text style={{color: showFilters ? COLORS.orange : '#666', fontWeight:'700'}}>Filters</Text>
+        {/* Location Row */}
+        <View style={styles.locationRow}>
+          <Ionicons name="location-outline" size={16} color={COLORS.orange} />
+          <Text style={styles.locationText}>Cluj-Napoca, RO</Text>
+          <TouchableOpacity><Text style={styles.changeText}>Change</Text></TouchableOpacity>
+          <View style={{flex: 1}} />
+          <Text style={styles.nearbyText}>{taskers.length} Krafters nearby</Text>
+        </View>
+
+        {/* Categories (Horizontal Scroll) */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
+          <TouchableOpacity 
+            style={styles.catItem} 
+            onPress={() => {setSelectedCategory(null); fetchData({search: searchQuery});}}
+          >
+            <View style={[styles.catIconBox, !selectedCategory && styles.catIconBoxActive]}>
+              <Ionicons name="list" size={24} color={!selectedCategory ? COLORS.white : COLORS.textLight} />
+            </View>
+            <Text style={[styles.catText, !selectedCategory && {color: COLORS.white}]}>All</Text>
           </TouchableOpacity>
-        </View>
 
-        {showFilters && (
-          <View style={styles.filtersContainer}>
-            <TextInput
-              style={styles.filterInput}
-              placeholder="Min price"
-              keyboardType="numeric"
-              value={minRate}
-              onChangeText={setMinRate}
-              placeholderTextColor="#999"
-            />
-
-            <TextInput
-              style={styles.filterInput}
-              placeholder="Max price"
-              keyboardType="numeric"
-              value={maxRate}
-              onChangeText={setMaxRate}
-              placeholderTextColor="#999"
-            />
-
-            <TextInput
-              style={styles.filterInput}
-              placeholder="Min rating"
-              keyboardType="numeric"
-              value={minRating}
-              onChangeText={setMinRating}
-              placeholderTextColor="#999"
-            />
-
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 }}>
-              <TouchableOpacity 
-                style={styles.clearBtn} 
-                onPress={() => { 
-                  setMinRate(''); 
-                  setMaxRate(''); 
-                  setMinRating(''); 
-                  fetchData({ search: searchQuery, category: selectedCategory }); 
-                }}>
-                <Text style={styles.clearBtnText}>Clear</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.applyBtn} onPress={() => applyFilters()}>
-                <Text style={styles.applyBtnText}>Apply</Text>
-              </TouchableOpacity>
-            </View> 
-          </View>
-        )}
-
-        {/* Categories */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>CATEGORIES</Text>
-          {selectedCategory && <Text style={{fontSize: 12, color: COLORS.orange, fontWeight: 'bold'}}>Filtering by: {selectedCategory}</Text>}
-        </View>
-        
-        <View style={styles.categoriesGrid}>
           {categories.map((cat) => {
              const isSelected = selectedCategory === cat.name;
              return (
-              <TouchableOpacity 
-                key={cat.id} 
-                style={[styles.categoryCard, isSelected && styles.categoryCardSelected]} 
-                onPress={() => handleCategoryPress(cat.name)}
-              >
-                <Image source={{ uri: cat.image }} style={styles.catImage} />
-                <View style={styles.catOverlay} />
-                <View style={styles.catContent}>
-                  <View style={[styles.catIconBox, isSelected && {backgroundColor: COLORS.orange}]}>
-                    <MaterialCommunityIcons name={cat.icon as any} size={20} color={isSelected ? 'white' : COLORS.darkBlue} />
-                  </View>
-                  <Text style={styles.catName}>{cat.name}</Text>
+              <TouchableOpacity key={cat.id} style={styles.catItem} onPress={() => handleCategoryPress(cat.name)}>
+                <View style={[styles.catIconBox, isSelected && styles.catIconBoxActive]}>
+                  <MaterialCommunityIcons name={cat.icon as any} size={24} color={isSelected ? COLORS.white : COLORS.textLight} />
                 </View>
+                <Text style={[styles.catText, isSelected && {color: COLORS.white}]}>{cat.name}</Text>
               </TouchableOpacity>
             )
           })}
+        </ScrollView>
+
+        {/* Filter Pills */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersRow}>
+          <TouchableOpacity style={styles.filterBtnPrimary} onPress={() => router.push('/modal')}>
+            <Ionicons name="options-outline" size={16} color={COLORS.white} style={{marginRight: 6}} />
+            <Text style={styles.filterBtnPrimaryText}>Filters</Text>
+          </TouchableOpacity>
+          <View style={styles.filterPill}><Text style={styles.filterPillText}>Available today</Text></View>
+          <View style={styles.filterPill}>
+            <Ionicons name="shield-checkmark-outline" size={14} color={COLORS.textLight} style={{marginRight: 4}}/>
+            <Text style={styles.filterPillText}>Verified</Text>
+          </View>
+          <View style={styles.filterPill}>
+            <Ionicons name="star" size={12} color={COLORS.textLight} style={{marginRight: 4}}/>
+            <Text style={styles.filterPillText}>4.5+</Text>
+          </View>
+        </ScrollView>
+
+        <View style={styles.sortRow}>
+          <Text style={styles.sortText}>Top rated</Text>
+          <Ionicons name="chevron-down" size={14} color={COLORS.textLight} style={{marginLeft: 4}} />
         </View>
 
-        {/* Popular Taskers */}
-        <View style={[styles.sectionHeader, { marginTop: 20 }]}>
-          <Text style={styles.sectionTitle}>
-            {selectedCategory || searchQuery ? 'SEARCH RESULTS' : 'POPULAR TASKERS'}
-          </Text>
-          <Text style={{color: '#999', fontSize: 12}}>{filteredTaskers.length} Found</Text>
-        </View>
-
-        {filteredTaskers.map((tasker) => (
+        {/* Taskers List */}
+        {taskers.map((tasker) => (
           <TouchableOpacity 
             key={tasker.id} 
             style={styles.taskerCard}
             onPress={() => router.push(`/tasker/${tasker.id}`)}
           >
-            <View style={styles.taskerHeader}>
-              <Image source={{ uri: tasker.image }} style={styles.avatar} />
+            <View style={styles.cardHeader}>
+              {tasker.image ? (
+                <Image source={{ uri: tasker.image }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatarPlaceholder}><Text style={styles.avatarInitials}>{tasker.name.charAt(0)}</Text></View>
+              )}
+              
               <View style={styles.taskerInfo}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.taskerName}>{tasker.name}</Text>
-                  <View style={styles.ratingBadge}>
-                    <Ionicons name="star" size={12} color="#BFA056" />
-                    <Text style={styles.ratingText}>{tasker.rating}</Text>
-                  </View>
-                </View>
-                <Text style={styles.reviewText}>{tasker.reviews} REVIEWS • {tasker.tasks} TASKS</Text>
+                <Text style={styles.taskerName}>{tasker.name}</Text>
+                <Text style={styles.taskerTrade}>{tasker.tags?.[0] || 'Professional'}</Text>
                 
-                <View style={styles.tagsRow}>
-                  {tasker.tags && tasker.tags.map((tag, idx) => (
-                    <View key={idx} style={[styles.tag, selectedCategory === tag && {backgroundColor: COLORS.orange}]}>
-                      <Text style={[styles.tagText, selectedCategory === tag && {color: 'white'}]}>{tag}</Text>
-                    </View>
-                  ))}
+                <View style={styles.statsRow}>
+                  <Text style={styles.priceText}>${tasker.rate}<Text style={styles.priceSubtext}>/hr</Text></Text>
+                  <Text style={styles.dotSeparator}>•</Text>
+                  <Ionicons name="star" size={12} color="#F5A623" />
+                  <Text style={styles.ratingText}>{tasker.rating ?? '0.0'}</Text>
+                  <Text style={styles.reviewsText}>({tasker.reviews})</Text>
+                  <Text style={styles.dotSeparator}>•</Text>
+                  <Text style={styles.reviewsText}>2.1 mi</Text>
                 </View>
               </View>
-              <View style={styles.priceColumn}>
-                <View style={styles.priceContainer}>
-                  <Text style={styles.priceText}>{tasker.rate}</Text>
-                  <Text style={styles.currencyText}>RON/HR</Text>
+              
+              <TouchableOpacity style={styles.heartBtn}>
+                <Ionicons name="heart-outline" size={20} color={COLORS.textLight} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.tagsRow}>
+              {(tasker.tags || []).slice(0, 3).map((tag, idx) => (
+                <View key={idx} style={styles.tagPill}>
+                  <Text style={styles.tagPillText}>{tag}</Text>
                 </View>
+              ))}
+            </View>
+
+            <View style={styles.cardFooter}>
+              <Text style={styles.jobsText}>{tasker.tasks || 0} jobs</Text>
+              <View style={styles.bookBtn}>
+                <Text style={styles.bookBtnText}>Book now</Text>
               </View>
             </View>
-            {tasker.is_online && (
-              <View style={styles.onlineBadge}><Text style={styles.onlineText}>ONLINE</Text></View>
-            )}
           </TouchableOpacity>
         ))}
-        {filteredTaskers.length === 0 && (
-          <Text style={{textAlign: 'center', marginTop: 30, color: '#999'}}>No taskers found matching your filters.</Text>
+
+        {taskers.length === 0 && !loading && (
+          <Text style={styles.emptyText}>No krafters found.</Text>
         )}
+        
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -321,59 +211,61 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.white },
-    screenScroll: { paddingHorizontal: 20, paddingTop: 10 },
-    headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 10 },
-    logoContainer: { flexDirection: 'row', alignItems: 'center' },
-    logoBox: { width: 28, height: 28, backgroundColor: COLORS.darkBlue, borderRadius: 6, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
-    logoText: { color: 'white', fontWeight: 'bold', fontSize: 18 },
-    brandName: { fontSize: 20, fontWeight: 'bold', color: COLORS.darkBlue },
-    authButtons: { flexDirection: 'row', alignItems: 'center' },
-    headerAvatarTouchable: { width: 36, height: 36, borderRadius: 18, overflow: 'hidden' },
-    headerAvatar: { width: 36, height: 36, borderRadius: 18 },
-    headerAvatarPlaceholder: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.darkBlue, justifyContent:'center', alignItems:'center' },
-    loginText: { fontWeight: '600', color: COLORS.darkBlue, marginRight: 15 },
-    signUpBtn: { backgroundColor: COLORS.darkBlue, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
-    signUpText: { color: 'white', fontWeight: '600', fontSize: 13 },
-    searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.lightGray, borderRadius: 12, paddingHorizontal: 15, paddingVertical: 12, marginBottom: 15 },
-    searchInput: { flex: 1, fontSize: 15, color: COLORS.textDark },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  screenScroll: { paddingHorizontal: 20 },
+  
+  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 20 },
+  brandTitle: { fontSize: 28, fontWeight: '400', color: COLORS.white, letterSpacing: 0.5 },
+  bellButton: { width: 40, height: 40, borderRadius: 12, backgroundColor: COLORS.cardBg, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.lightGray },
+  notificationDot: { position: 'absolute', top: 10, right: 12, width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.orange },
 
-    // Filters
-    filterRow: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 8 },
-    filterToggle: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'transparent', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
-    filtersContainer: { backgroundColor: '#FBFBFC', borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#F0F0F0' },
-    filterInput: { backgroundColor: 'white', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#EEE', marginBottom: 8 },
-    clearBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: '#F5F5F5', marginRight: 8 },
-    clearBtnText: { color: '#666', fontWeight: '700' },
-    applyBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: COLORS.darkBlue },
-    applyBtnText: { color: 'white', fontWeight: '700' },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBg, borderRadius: 14, paddingHorizontal: 15, paddingVertical: 12, borderWidth: 1, borderColor: COLORS.lightGray },
+  searchInput: { flex: 1, fontSize: 14, color: COLORS.white },
 
-    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-    sectionTitle: { fontSize: 18, fontWeight: '900', color: COLORS.darkBlue, letterSpacing: 0.5 },
-    categoriesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-    categoryCard: { width: '48%', height: 140, borderRadius: 20, marginBottom: 15, overflow: 'hidden', position: 'relative' },
-    categoryCardSelected: { borderColor: COLORS.orange, borderWidth: 3 }, // Added style for selection
-    catImage: { width: '100%', height: '100%' },
-    catOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(31, 32, 65, 0.4)' },
-    catContent: { position: 'absolute', bottom: 15, left: 15 },
-    catIconBox: { width: 32, height: 32, backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-    catName: { color: 'white', fontWeight: 'bold', fontSize: 14, letterSpacing: 0.5 },
-    taskerCard: { backgroundColor: 'white', borderRadius: 24, padding: 15, marginBottom: 20, borderWidth: 1, borderColor: '#eee', position: 'relative', shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-    taskerHeader: { flexDirection: 'row' },
-    avatar: { width: 70, height: 70, borderRadius: 16, marginRight: 15 },
-    taskerInfo: { flex: 1, justifyContent: 'space-between' },
-    nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    taskerName: { fontSize: 17, fontWeight: '800', color: COLORS.darkBlue },
-    ratingBadge: { flexDirection: 'row', backgroundColor: '#F9F7EF', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, alignItems: 'center' },
-    ratingText: { fontWeight: 'bold', fontSize: 12, color: '#9C8C5E', marginLeft: 3 },
-    reviewText: { color: '#999', fontSize: 11, fontWeight: '600', marginTop: 2 },
-    tagsRow: { flexDirection: 'row', marginTop: 8 },
-    tag: { backgroundColor: '#F5F6F8', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginRight: 6 },
-    tagText: { fontSize: 10, fontWeight: 'bold', color: '#8A8D9F' },
-    priceColumn: { alignItems: 'flex-end', justifyContent: 'space-between' },
-    priceContainer: { alignItems: 'center' },
-    priceText: { fontSize: 20, fontWeight: '900', color: COLORS.darkBlue },
-    currencyText: { fontSize: 9, fontWeight: 'bold', color: '#8A8D9F' },
-    onlineBadge: { position: 'absolute', bottom: 12, left: 15, backgroundColor: COLORS.green, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, width: 70, alignItems: 'center' },
-    onlineText: { color: 'white', fontSize: 9, fontWeight: 'bold' },
+  locationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 15, marginBottom: 20 },
+  locationText: { color: COLORS.textLight, fontSize: 12, marginLeft: 4, marginRight: 8 },
+  changeText: { color: COLORS.orange, fontSize: 12, fontWeight: '600' },
+  nearbyText: { color: COLORS.textLight, fontSize: 12 },
+
+  categoriesContainer: { flexDirection: 'row', marginBottom: 20 },
+  catItem: { alignItems: 'center', marginRight: 15 },
+  catIconBox: { width: 56, height: 56, borderRadius: 16, backgroundColor: COLORS.cardBg, justifyContent: 'center', alignItems: 'center', marginBottom: 8, borderWidth: 1, borderColor: COLORS.lightGray },
+  catIconBoxActive: { backgroundColor: COLORS.orange, borderColor: COLORS.orange },
+  catText: { color: COLORS.textLight, fontSize: 11, fontWeight: '600' },
+
+  filtersRow: { flexDirection: 'row', marginBottom: 20 },
+  filterBtnPrimary: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.orange, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 10 },
+  filterBtnPrimaryText: { color: COLORS.white, fontSize: 12, fontWeight: '700' },
+  filterPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'transparent', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 10, borderWidth: 1, borderColor: COLORS.lightGray },
+  filterPillText: { color: COLORS.textLight, fontSize: 12, fontWeight: '600' },
+
+  sortRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
+  sortText: { color: COLORS.textLight, fontSize: 12 },
+
+  taskerCard: { backgroundColor: COLORS.cardBg, borderRadius: 20, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: COLORS.lightGray },
+  cardHeader: { flexDirection: 'row' },
+  avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
+  avatarPlaceholder: { width: 50, height: 50, borderRadius: 25, backgroundColor: COLORS.lightGray, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  avatarInitials: { color: COLORS.white, fontSize: 18, fontWeight: 'bold' },
+  taskerInfo: { flex: 1 },
+  taskerName: { fontSize: 16, fontWeight: '700', color: COLORS.white, marginBottom: 2 },
+  taskerTrade: { fontSize: 12, color: COLORS.textLight, marginBottom: 6 },
+  statsRow: { flexDirection: 'row', alignItems: 'center' },
+  priceText: { color: COLORS.white, fontWeight: '700', fontSize: 13 },
+  priceSubtext: { color: COLORS.textLight, fontWeight: '400', fontSize: 11 },
+  dotSeparator: { color: COLORS.textLight, marginHorizontal: 6, fontSize: 10 },
+  ratingText: { color: '#F5A623', fontWeight: '700', fontSize: 12, marginLeft: 4 },
+  reviewsText: { color: COLORS.textLight, fontSize: 11, marginLeft: 4 },
+  heartBtn: { padding: 4 },
+
+  tagsRow: { flexDirection: 'row', marginTop: 16, marginBottom: 16, flexWrap: 'wrap' },
+  tagPill: { backgroundColor: COLORS.lightGray, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginRight: 8, marginBottom: 8 },
+  tagPillText: { color: COLORS.textLight, fontSize: 10, fontWeight: '600' },
+
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  jobsText: { color: COLORS.textLight, fontSize: 12 },
+  bookBtn: { backgroundColor: COLORS.orange, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
+  bookBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
+  
+  emptyText: { textAlign: 'center', marginTop: 30, color: COLORS.textLight },
 });
