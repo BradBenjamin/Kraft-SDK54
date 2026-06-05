@@ -48,10 +48,7 @@ export default function TabLayout() {
         options={{
           title: 'JOIN',
           tabBarIcon: ({ color }) => (
-             // Custom styling for the Join "Plus" icon to match design
-            <View style={{ marginBottom: 4 }}>
-              <Ionicons name="add-circle-outline" size={28} color={color} />
-            </View>
+            <Ionicons name="add-circle-outline" size={28} color={color} />
           ),
         }}
       />

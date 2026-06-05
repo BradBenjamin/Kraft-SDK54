@@ -44,8 +44,6 @@ export default function HomeScreen() {
   const [minRate, setMinRate] = useState('');
   const [maxRate, setMaxRate] = useState('');
   const [minRating, setMinRating] = useState('');
-  // Local master list to support robust filtering (fallback)
-  const [allTaskers, setAllTaskers] = useState<Tasker[]>([]);
   const router = useRouter();
 
   // Auth & profile for header avatar
@@ -147,42 +145,17 @@ export default function HomeScreen() {
     fetchData({ search: searchQuery, category: newSelected, minRate, maxRate, minRating });
   };
 
-  // Apply filters client-side against master list (reliable UX)
+  // Replace your current applyFilters function with this:
   const applyFilters = () => {
-    const parseNumberOrNull = (s: string) => {
-      const v = s?.toString().trim();
-      if (!v) return null;
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
-    };
-
-    let results = allTaskers.slice();
-
-    // Search text: name or tags
-    if (searchQuery && searchQuery.trim().length > 0) {
-      const q = searchQuery.trim().toLowerCase();
-      results = results.filter(t => t.name.toLowerCase().includes(q) || (t.tags && t.tags.some((tag: string) => tag.toLowerCase().includes(q))));
-    }
-
-    // Category exact match if selected
-    if (selectedCategory) {
-      results = results.filter(t => t.tags && t.tags.includes(selectedCategory));
-    }
-
-    // Min/Max price
-    const min = parseNumberOrNull(minRate);
-    const max = parseNumberOrNull(maxRate);
-    if (min !== null) results = results.filter(t => Number(t.rate) >= min);
-    if (max !== null) results = results.filter(t => Number(t.rate) <= max);
-
-    // Min rating
-    const minR = parseNumberOrNull(minRating);
-    if (minR !== null) results = results.filter(t => (t.rating !== undefined && Number(t.rating) >= minR));
-
-    setTaskers(results);
+    fetchData({ 
+      search: searchQuery, 
+      category: selectedCategory, 
+      minRate, 
+      maxRate, 
+      minRating 
+    });
     setShowFilters(false);
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
