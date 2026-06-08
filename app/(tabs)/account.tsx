@@ -172,7 +172,7 @@ export default function AccountScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.centerContainer} showsVerticalScrollIndicator={false}>
         <Image
-          source={require('@/assets/images/logo-icon.png')}
+          source={require('@/assets/images/logo-white.png')}
           style={styles.loginIcon}
           resizeMode="contain"
         />
