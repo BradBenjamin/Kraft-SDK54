@@ -1,52 +1,80 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
-import { COLORS } from '@/constants/data'; // Ensure alias is set or use relative path '../../constants/data'
+import { COLORS } from '@/constants/data';
+import { supabase } from '@/lib/supabase';
 
 export default function TabLayout() {
+  const [isKrafter, setIsKrafter] = useState(false);
+
+  useEffect(() => {
+    const checkKrafter = async (userId?: string) => {
+      if (!userId) return setIsKrafter(false);
+      const { data } = await supabase.from('taskers').select('id').eq('user_id', userId).maybeSingle();
+      setIsKrafter(!!data);
+    };
+
+    supabase.auth.getUser().then(({ data: { user } }) => checkKrafter(user?.id));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) =>
+      checkKrafter(session?.user?.id)
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
         tabBarActiveTintColor: COLORS.orange,
         tabBarInactiveTintColor: COLORS.textLight,
         tabBarStyle: {
-          backgroundColor: COLORS.background,
+          backgroundColor: COLORS.cardBg,
           borderTopColor: COLORS.lightGray,
-          height: 85,
-          paddingBottom: 25,
-          paddingTop: 10,
+          borderTopWidth: 1,
         },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' }
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'HOME',
+          title: 'Home',
           tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
-          title: 'CHAT',
+          title: 'Messages',
           tabBarIcon: ({ color }) => <Ionicons name="chatbubble-outline" size={24} color={color} />,
         }}
       />
+
+      {/* JOIN — hidden once the user is a Krafter */}
       <Tabs.Screen
-        name="bookings" // Rename your app/(tabs)/join.tsx file to bookings.tsx
+        name="join"
         options={{
-          title: 'Bookings',
-          tabBarIcon: ({ color }) => <Ionicons name="briefcase-outline" size={24} color={color} />,
+          title: 'Join',
+          href: isKrafter ? null : '/join',
+          tabBarIcon: ({ color }) => <Ionicons name="add-circle-outline" size={24} color={color} />,
         }}
       />
+
+      {/* DASHBOARD — only visible to Krafters */}
+      <Tabs.Screen
+        name="krafter"
+        options={{
+          title: 'Dashboard',
+          href: isKrafter ? '/krafter' : null,
+          tabBarIcon: ({ color }) => <Ionicons name="construct-outline" size={24} color={color} />,
+        }}
+      />
+
       <Tabs.Screen
         name="account"
         options={{
-          title: 'ACCOUNT',
+          title: 'Account',
           tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
         }}
       />
